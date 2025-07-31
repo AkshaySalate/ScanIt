@@ -13,19 +13,16 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   List<Folder> folders = [
-    Folder(id: '1', name: 'ScanIT'),
-    Folder(id: '2', name: 'Receipts'),
-    Folder(id: '3', name: 'Work Docs'),
+    Folder(id: '1', name: 'ScanIT', images: []),
+    Folder(id: '2', name: 'Receipts', images: []),
+    Folder(id: '3', name: 'Work Docs', images: []),
   ];
 
   Future<void> _openCamera() async {
-    // Check camera permission status
     var status = await Permission.camera.status;
     if (!status.isGranted) {
-      // Request permission if not already granted
       status = await Permission.camera.request();
       if (!status.isGranted) {
-        // Show dialog asking user to enable permission in settings
         showDialog(
           context: context,
           builder: (_) => AlertDialog(
@@ -40,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
               TextButton(
                 onPressed: () async {
                   Navigator.pop(context);
-                  await openAppSettings(); // Opens the app settings page
+                  await openAppSettings();
                 },
                 child: const Text('Open Settings'),
               ),
@@ -51,17 +48,21 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    // If permission is granted, open the camera as before
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
+      setState(() {
+        // Always add to default "ScanIT" folder (id == '1')
+        final scanitFolder = folders.firstWhere((f) => f.id == '1');
+        scanitFolder.images.add(image.path);
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Scanned: ${image.path}')),
+        const SnackBar(content: Text('Image saved to ScanIT folder!')),
       );
     }
   }
-
 
   void _addFolder() {
     showDialog(
