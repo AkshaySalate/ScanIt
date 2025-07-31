@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:scanit/models/folder.dart';
 import 'folder_detail.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,14 +19,49 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   Future<void> _openCamera() async {
+    // Check camera permission status
+    var status = await Permission.camera.status;
+    if (!status.isGranted) {
+      // Request permission if not already granted
+      status = await Permission.camera.request();
+      if (!status.isGranted) {
+        // Show dialog asking user to enable permission in settings
+        showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: const Text('Camera Permission Needed'),
+            content: const Text(
+                'ScanIT needs camera access to scan documents. Please enable camera permission in your settings.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(context);
+                  await openAppSettings(); // Opens the app settings page
+                },
+                child: const Text('Open Settings'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+    }
+
+    // If permission is granted, open the camera as before
     final picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
+
     if (image != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Scanned: ${image.path}')),
       );
     }
   }
+
 
   void _addFolder() {
     showDialog(
