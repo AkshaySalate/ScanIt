@@ -7,7 +7,7 @@ class Folder extends HiveObject {
   @HiveField(0)
   final String id;
   @HiveField(1)
-  final String name;
+  String name;
   @HiveField(2)
   final List<String> images;
 

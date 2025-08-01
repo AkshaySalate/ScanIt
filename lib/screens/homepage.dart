@@ -113,6 +113,104 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showFolderMenu(Folder folder, BuildContext context) async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.edit),
+                title: const Text('Rename'),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  _renameFolder(folder);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                onTap: () async {
+                  Navigator.pop(ctx);
+                  _deleteFolder(folder);
+                },
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
+  void _renameFolder(Folder folder) {
+    String folderName = folder.name;
+    showDialog(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Rename Folder'),
+          content: TextField(
+            autofocus: true,
+            controller: TextEditingController(text: folderName),
+            onChanged: (val) => folderName = val,
+            decoration: const InputDecoration(hintText: 'New folder name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (folderName.trim().isNotEmpty && folderName != folder.name) {
+                  folder.name = folderName.trim();
+                  await folder.save();
+                  setState(() {});
+                }
+                Navigator.pop(context);
+              },
+              child: const Text('Rename'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
+  void _deleteFolder(Folder folder) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Folder?'),
+        content: const Text('This will permanently delete the folder and all its scans. Are you sure?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await folder.delete();
+      setState(() {});
+    }
+  }
+
+
+
   Future<Folder?> _showFolderPicker() async {
     String? newFolderName;
     final folders = foldersBox.values.toList();
@@ -355,19 +453,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         mainAxisSpacing: 22,
                         childAspectRatio: 1.0,
                       ),
-                      itemBuilder: (context, i) {
-                        return GestureDetector(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => FolderDetailScreen(folder: folders[i]),
-                              ),
-                            );
-                          },
-                          child: _FolderSquareCard(folderName: folders[i].name),
-                        );
-                      },
+                        itemBuilder: (context, i) {
+                          final folder = folders[i];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => FolderDetailScreen(folder: folder),
+                                ),
+                              );
+                            },
+                            child: _FolderSquareCard(
+                              folderName: folder.name,
+                              onMorePressed: () => _showFolderMenu(folder, context),
+                            ),
+                          );
+                        }
                     );
                   },
                 ),
@@ -390,52 +492,72 @@ class _HomeScreenState extends State<HomeScreen> {
 // Your square folder card widget
 class _FolderSquareCard extends StatelessWidget {
   final String folderName;
+  final VoidCallback onMorePressed;
 
-  const _FolderSquareCard({required this.folderName, super.key});
+  const _FolderSquareCard({
+    required this.folderName,
+    required this.onMorePressed,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
-        gradient: LinearGradient(
-          colors: [
-            Colors.white.withOpacity(0.85),
-            Colors.teal.withOpacity(0.12),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.teal.withOpacity(0.10),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.folder_rounded, color: Colors.teal.shade700, size: 38),
-            const SizedBox(height: 14),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10.0),
-              child: Text(
-                folderName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 17,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
+    return Stack(
+      children: [
+        // Existing folder card design
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.85),
+                Colors.teal.withOpacity(0.12),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.teal.withOpacity(0.10),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.folder_rounded, color: Colors.teal.shade700, size: 38),
+                const SizedBox(height: 14),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Text(
+                    folderName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 17,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-      ),
+        // "More" button (top right)
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+            icon: Icon(Icons.more_vert, color: Colors.grey.shade700, size: 20),
+            onPressed: onMorePressed,
+            tooltip: 'Folder options',
+          ),
+        ),
+      ],
     );
   }
 }
