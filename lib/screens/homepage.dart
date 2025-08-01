@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:scanit/models/folder.dart';
 import 'folder_detail.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,13 +13,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Folder> folders = [
-    Folder(id: '1', name: 'ScanIT', images: []),
-    Folder(id: '2', name: 'Receipts', images: []),
-    Folder(id: '3', name: 'Work Docs', images: []),
-  ];
+  late final Box<Folder> foldersBox;
+
+  @override
+  void initState() {
+    super.initState();
+    foldersBox = Hive.box<Folder>('foldersBox');
+    // Set up initial folders if app is run for the first time
+    if (foldersBox.isEmpty) {
+      foldersBox.addAll([
+        Folder(id: '1', name: 'ScanIT'),
+        Folder(id: '2', name: 'Receipts'),
+        Folder(id: '3', name: 'Work Docs'),
+      ]);
+    }
+  }
 
   Future<void> _openCamera() async {
+    final Folder? selectedFolder = await _showFolderPicker();
+    if (selectedFolder == null) return;
+
     var status = await Permission.camera.status;
     if (!status.isGranted) {
       status = await Permission.camera.request();
@@ -52,15 +66,14 @@ class _HomeScreenState extends State<HomeScreen> {
     final XFile? image = await picker.pickImage(source: ImageSource.camera);
 
     if (image != null) {
-      setState(() {
-        // Always add to default "ScanIT" folder (id == '1')
-        final scanitFolder = folders.firstWhere((f) => f.id == '1');
-        scanitFolder.images.add(image.path);
-      });
+      // Update images list and save changes persistently
+      selectedFolder.images.add(image.path);
+      selectedFolder.save();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Image saved to ScanIT folder!')),
+        SnackBar(content: Text('Image saved to "${selectedFolder.name}" folder!')),
       );
+      setState(() {}); // Refresh UI
     }
   }
 
@@ -80,13 +93,12 @@ class _HomeScreenState extends State<HomeScreen> {
             TextButton(
               onPressed: () {
                 if (folderName.trim().isNotEmpty) {
-                  setState(() {
-                    folders.add(Folder(
-                      id: DateTime.now().millisecondsSinceEpoch.toString(),
-                      name: folderName.trim(),
-                    ));
-                  });
+                  foldersBox.add(Folder(
+                    id: DateTime.now().millisecondsSinceEpoch.toString(),
+                    name: folderName.trim(),
+                  ));
                   Navigator.pop(context);
+                  setState(() {});
                 }
               },
               child: const Text('Add'),
@@ -101,12 +113,173 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<Folder?> _showFolderPicker() async {
+    String? newFolderName;
+    final folders = foldersBox.values.toList();
+    return showDialog<Folder>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Dialog(
+            backgroundColor: Colors.transparent,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 420),
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                color: Colors.white.withOpacity(0.96),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 16,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    "Select Folder",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  GridView.builder(
+                    shrinkWrap: true,
+                    itemCount: folders.length + 1,
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2, mainAxisSpacing: 16, crossAxisSpacing: 16, childAspectRatio: 1),
+                    itemBuilder: (context, i) {
+                      if (i < folders.length) {
+                        final folder = folders[i];
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () => Navigator.pop(context, folder),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.teal.shade50,
+                                    Colors.white.withOpacity(0.94),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.teal.withOpacity(0.05),
+                                    blurRadius: 8,
+                                    offset: Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.folder_rounded, color: Colors.teal.shade700, size: 32),
+                                  const SizedBox(height: 10),
+                                  Text(folder.name,
+                                      style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      } else {
+                        // The "Add New Folder" card
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(20),
+                            onTap: () async {
+                              await showDialog(
+                                context: context,
+                                builder: (context2) => AlertDialog(
+                                  title: const Text('New Folder Name'),
+                                  content: TextField(
+                                    autofocus: true,
+                                    onChanged: (val) => newFolderName = val,
+                                    decoration: const InputDecoration(hintText: 'Folder name'),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context2),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () {
+                                        if (newFolderName != null && newFolderName!.trim().isNotEmpty) {
+                                          foldersBox.add(Folder(
+                                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                            name: newFolderName!.trim(),
+                                          ));
+                                          newFolderName = '';
+                                          setDialogState(() {});
+                                        }
+                                        Navigator.pop(context2);
+                                      },
+                                      child: const Text('Add'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(20),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.tealAccent.withOpacity(0.14),
+                                    Colors.white.withOpacity(0.93),
+                                  ],
+                                  begin: Alignment.bottomRight,
+                                  end: Alignment.topLeft,
+                                ),
+                                border: Border.all(
+                                  color: Colors.teal.shade300,
+                                  width: 1.4,
+                                ),
+                              ),
+                              padding: const EdgeInsets.all(16),
+                              child: Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.add, color: Colors.teal, size: 45),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Responsive column count based on width (2 for phones, more for wide screens)
     int crossAxisCount = MediaQuery.of(context).size.width > 600 ? 3 : 2;
     double sidePadding = MediaQuery.of(context).size.width > 600 ? 32 : 16;
 
+    // Use ValueListenableBuilder for automatic UI updates
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -167,25 +340,34 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               const SizedBox(height: 14),
               Expanded(
-                child: GridView.builder(
-                  itemCount: folders.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
-                    crossAxisSpacing: 22,
-                    mainAxisSpacing: 22,
-                    childAspectRatio: 1.0, // Square!
-                  ),
-                  itemBuilder: (context, i) {
-                    return GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FolderDetailScreen(folder: folders[i]),
-                          ),
+                child: ValueListenableBuilder(
+                  valueListenable: foldersBox.listenable(),
+                  builder: (context, Box<Folder> box, _) {
+                    final folders = box.values.toList();
+                    if (folders.isEmpty) {
+                      return const Center(child: Text("No folders yet."));
+                    }
+                    return GridView.builder(
+                      itemCount: folders.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 22,
+                        mainAxisSpacing: 22,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemBuilder: (context, i) {
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => FolderDetailScreen(folder: folders[i]),
+                              ),
+                            );
+                          },
+                          child: _FolderSquareCard(folderName: folders[i].name),
                         );
                       },
-                      child: _FolderSquareCard(folderName: folders[i].name),
                     );
                   },
                 ),
@@ -205,7 +387,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// Square, glassy look folder card with gradient overlay
+// Your square folder card widget
 class _FolderSquareCard extends StatelessWidget {
   final String folderName;
 
