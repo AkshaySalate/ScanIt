@@ -414,261 +414,284 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return showDialog<Folder>(
       context: context,
-      barrierColor: Colors.transparent,
-      builder: (context) =>Stack(
+      barrierColor: Colors.transparent, // Transparent to show blurred backdrop
+      builder: (context) => Stack(
         children: [
-          // Blurred background layer
+          // Blurred background + subtle dark overlay
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
             child: Container(
-              color: Colors.black.withOpacity(0.3), // Optional: dark tint over blur
+              color: Colors.black.withOpacity(0.3),
             ),
           ),
           StatefulBuilder(
-              builder: (context, setDialogState) {
-                // ✅ Move inside so it's always up-to-date
-                final folders = foldersBox.values.toList();
+            builder: (context, setDialogState) {
+              final folders = foldersBox.values.toList();
 
-                return Dialog(
-                  backgroundColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                  child: Container(
-                    constraints: const BoxConstraints(maxWidth: 420),
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          //Colors.teal.shade100.withOpacity(0.45),
-                          Colors.white,
-                          Colors.tealAccent.withOpacity(0.12),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(22),
-                      color: Colors.white.withOpacity(0.96),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 16,
-                          offset: Offset(0, 4),
-                        ),
+              return Dialog(
+                backgroundColor: Colors.transparent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 420),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white,
+                        Colors.tealAccent.withOpacity(0.12),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Text(
-                          "Select Folder",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          itemCount: folders.length + 1,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2, mainAxisSpacing: 16, crossAxisSpacing: 16, childAspectRatio: 1),
-                          itemBuilder: (context, i) {
-                            if (i < folders.length) {
-                              final folder = folders[i];
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(20),
-                                  onTap: () => Navigator.pop(context, folder),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.teal.shade50,
-                                          Colors.white.withOpacity(0.94),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.teal.withOpacity(0.05),
-                                          blurRadius: 8,
-                                          offset: Offset(0, 4),
-                                        ),
-                                      ],
-                                    ),
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.folder_rounded, color: Colors.teal.shade700, size: 32),
-                                        const SizedBox(height: 10),
-                                        Text(folder.name,
-                                            style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 15),
-                                            textAlign: TextAlign.center,
-                                            overflow: TextOverflow.ellipsis),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            } else {
-                              return Material(
-                                color: Colors.transparent,
-                                child: InkWell(
-                                  borderRadius: BorderRadius.circular(20),
-                                  onTap: () async {
-                                    String? newFolderName;
-
-                                    await showDialog(
-                                      context: context,
-                                      barrierColor: Colors.transparent, // Transparent to show blur
-                                      builder: (context2) => Stack(
-                                        children: [
-                                          // Blurred background
-                                          BackdropFilter(
-                                            filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
-                                            child: Container(
-                                              color: Colors.black.withOpacity(0.2), // subtle dark overlay
-                                            ),
-                                          ),
-                                          // Centered dialog box matching Rename UI
-                                          Center(
-                                            child: Dialog(
-                                              backgroundColor: Colors.transparent,
-                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  gradient: LinearGradient(
-                                                    colors: [
-                                                      Colors.white,
-                                                      Colors.tealAccent.withOpacity(0.10),
-                                                    ],
-                                                    begin: Alignment.topRight,
-                                                    end: Alignment.bottomLeft,
-                                                  ),
-                                                  borderRadius: BorderRadius.circular(24),
-                                                  boxShadow: [
-                                                    BoxShadow(
-                                                      color: Colors.teal.withOpacity(0.08),
-                                                      blurRadius: 18,
-                                                      offset: const Offset(0, 4),
-                                                    ),
-                                                  ],
-                                                ),
-                                                padding: const EdgeInsets.all(24),
-                                                child: Column(
-                                                  mainAxisSize: MainAxisSize.min,
-                                                  children: [
-                                                    const Text(
-                                                      'New Folder Name',
-                                                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                                                    ),
-                                                    const SizedBox(height: 18),
-                                                    TextField(
-                                                      autofocus: true,
-                                                      onChanged: (val) => newFolderName = val,
-                                                      decoration: InputDecoration(
-                                                        hintText: 'Folder name',
-                                                        filled: true,
-                                                        fillColor: Colors.grey.withOpacity(0.10),
-                                                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                                                        border: OutlineInputBorder(
-                                                          borderRadius: BorderRadius.circular(15),
-                                                          borderSide: BorderSide.none,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 22),
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                      children: [
-                                                        OutlinedButton(
-                                                          style: OutlinedButton.styleFrom(
-                                                            foregroundColor: Colors.teal.shade800,
-                                                            side: BorderSide(color: Colors.teal.shade200, width: 1.5),
-                                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                          ),
-                                                          onPressed: () => Navigator.pop(context2),
-                                                          child: const Text('Cancel'),
-                                                        ),
-                                                        ElevatedButton(
-                                                          style: ElevatedButton.styleFrom(
-                                                            backgroundColor: Colors.teal.shade700,
-                                                            foregroundColor: Colors.white,
-                                                            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                                          ),
-                                                          onPressed: () {
-                                                            if (newFolderName != null && newFolderName!.trim().isNotEmpty) {
-                                                              foldersBox.add(Folder(
-                                                                id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                                                name: newFolderName!.trim(),
-                                                              ));
-                                                              newFolderName = '';
-                                                              setDialogState(() {}); // Trigger rebuild to show new folder
-                                                            }
-                                                            Navigator.pop(context2);
-                                                          },
-                                                          child: const Text('Add'),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          Colors.tealAccent.withOpacity(0.14),
-                                          Colors.white.withOpacity(0.93),
-                                        ],
-                                        begin: Alignment.bottomRight,
-                                        end: Alignment.topLeft,
-                                      ),
-                                      border: Border.all(
-                                        color: Colors.teal.shade300,
-                                        width: 1.4,
-                                      ),
-                                    ),
-                                    padding: const EdgeInsets.all(16),
-                                    child: const Center(
-                                      child: Icon(Icons.add, color: Colors.teal, size: 45),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }
-                          },
-                        ),
-                      ],
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                    const Text(
+                    "Select Folder",
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                      color: Colors.teal,
                     ),
                   ),
-                );
-              },
-            ),
-          ],
+                  const SizedBox(height: 16),
+                  // Fixed height container wrapping GridView for scrollable folder list
+                  SizedBox(
+                    height: 400, // Fixed height, adjust as needed for your UI
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      itemCount: folders.length + 1,
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        mainAxisSpacing: 16,
+                        crossAxisSpacing: 16,
+                        childAspectRatio: 1,
+                      ),
+                      itemBuilder: (context, i) {
+                        if (i < folders.length) {
+                          final folder = folders[i];
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              splashColor: Colors.teal.withOpacity(0.25),
+                              highlightColor: Colors.teal.withOpacity(0.10),
+                              onTap: () => Navigator.pop(context, folder),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.teal.shade50.withOpacity(0.9),
+                                      Colors.white.withOpacity(0.94),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(20),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.teal.withOpacity(0.07),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 5),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.folder_rounded, color: Colors.teal.shade700, size: 36),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      folder.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                        color: Colors.teal,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        } else {
+                          // Add New Folder Tile with premium styling
+                          return Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(20),
+                              splashColor: Colors.teal.withOpacity(0.25),
+                              highlightColor: Colors.teal.withOpacity(0.10),
+                              onTap: () async {
+                                await showDialog(
+                                  context: context,
+                                  barrierColor: Colors.transparent,
+                                  builder: (context2) => Stack(
+                                    children: [
+                                      BackdropFilter(
+                                        filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+                                        child: Container(
+                                          color: Colors.black.withOpacity(0.2),
+                                        ),
+                                      ),
+                                      Center(
+                                        child: Dialog(
+                                          backgroundColor: Colors.transparent,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              gradient: LinearGradient(
+                                                colors: [
+                                                  Colors.white,
+                                                  Colors.tealAccent.withOpacity(0.10),
+                                                ],
+                                                begin: Alignment.topRight,
+                                                end: Alignment.bottomLeft,
+                                              ),
+                                              borderRadius: BorderRadius.circular(24),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.teal.withOpacity(0.08),
+                                                  blurRadius: 18,
+                                                  offset: const Offset(0, 4),
+                                                ),
+                                              ],
+                                            ),
+                                            padding: const EdgeInsets.all(24),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Text(
+                                                  'New Folder Name',
+                                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, color: Colors.teal),
+                                                ),
+                                                const SizedBox(height: 18),
+                                                TextField(
+                                                  autofocus: true,
+                                                  onChanged: (val) => newFolderName = val,
+                                                  decoration: InputDecoration(
+                                                    hintText: 'Folder name',
+                                                    filled: true,
+                                                    fillColor: Colors.grey.withOpacity(0.10),
+                                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                                    border: OutlineInputBorder(
+                                                      borderRadius: BorderRadius.circular(15),
+                                                      borderSide: BorderSide.none,
+                                                    ),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 22),
+                                                Row(
+                                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                  children: [
+                                                    OutlinedButton(
+                                                      style: OutlinedButton.styleFrom(
+                                                        foregroundColor: Colors.teal.shade800,
+                                                        side: BorderSide(color: Colors.teal.shade200, width: 1.5),
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                      ),
+                                                      onPressed: () => Navigator.pop(context2),
+                                                      child: const Text('Cancel'),
+                                                    ),
+                                                    ElevatedButton(
+                                                      style: ElevatedButton.styleFrom(
+                                                        backgroundColor: Colors.teal.shade700,
+                                                        foregroundColor: Colors.white,
+                                                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                                      ),
+                                                      onPressed: () {
+                                                        if (newFolderName != null && newFolderName!.trim().isNotEmpty) {
+                                                          foldersBox.add(Folder(
+                                                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                                            name: newFolderName!.trim(),
+                                                          ));
+                                                          newFolderName = '';
+                                                          setDialogState(() {}); // Trigger rebuild to show new folder
+                                                        }
+                                                        Navigator.pop(context2);
+                                                      },
+                                                      child: const Text('Add'),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.tealAccent.withOpacity(0.18),
+                                      Colors.white.withOpacity(0.95),
+                                    ],
+                                    begin: Alignment.bottomRight,
+                                    end: Alignment.topLeft,
+                                  ),
+                                  border: Border.all(
+                                    color: Colors.teal.shade300,
+                                    width: 1.8,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.teal.withOpacity(0.07),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(16),
+                                child: const Center(
+                                  child: Icon(Icons.add, color: Colors.teal, size: 48),
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
 
 
+
   @override
   Widget build(BuildContext context) {
-    int crossAxisCount = MediaQuery.of(context).size.width > 600 ? 3 : 2;
-    double sidePadding = MediaQuery.of(context).size.width > 600 ? 32 : 16;
+    final width = MediaQuery.of(context).size.width;
+    final horizontalPadding = width * 0.035;
+    final verticalPadding = width * 0.025;
 
-    // Use ValueListenableBuilder for automatic UI updates
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -691,76 +714,103 @@ class _HomeScreenState extends State<HomeScreen> {
             style: TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.w700,
-              fontSize: 24,
+              fontSize: 26,
+              letterSpacing: 0.8,
             ),
           ),
           centerTitle: true,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.add_rounded, color: Colors.teal.shade800),
-              onPressed: _addFolder,
-              tooltip: 'Add Folder',
-            ),
-            const SizedBox(width: 8),
-          ],
+          // Removed add-folder icon for cleaner UI
         ),
         body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: sidePadding, vertical: 14),
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: verticalPadding),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.only(bottom: 16, top: 8),
-                child: Text(
-                  'Welcome to ScanIT by Salate',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    fontWeight: FontWeight.w500,
+              Flexible(
+                flex: 0,
+                child: const Padding(
+                  padding: EdgeInsets.only(bottom: 18, top: 10),
+                  child: Text(
+                    'Welcome to ScanIT by Salate',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF6B7C93),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
               const Text(
                 "Folders",
                 style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 21,
+                  color: Colors.teal,
+                  letterSpacing: 0.3,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               Expanded(
                 child: ValueListenableBuilder(
                   valueListenable: foldersBox.listenable(),
                   builder: (context, Box<Folder> box, _) {
                     final folders = box.values.toList();
-                    if (folders.isEmpty) {
-                      return const Center(child: Text("No folders yet."));
-                    }
-                    return GridView.builder(
-                      itemCount: folders.length,
-                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: crossAxisCount,
-                        crossAxisSpacing: 22,
-                        mainAxisSpacing: 22,
-                        childAspectRatio: 1.0,
-                      ),
-                        itemBuilder: (context, i) {
-                          final folder = folders[i];
-                          return GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => FolderDetailScreen(folder: folder),
+                    final totalItems = folders.length + 1; // +1 for Add card
+
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        // Determine columns by available width (always square tiles)
+                        int columns;
+                        if (constraints.maxWidth < 500) {
+                          columns = 2;
+                        } else if (constraints.maxWidth < 900) {
+                          columns = 3;
+                        } else {
+                          columns = 4;
+                        }
+                        final spacing = width * 0.045;
+
+                        return GridView.builder(
+                          itemCount: totalItems,
+                          padding: const EdgeInsets.only(bottom: 12),
+                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: columns,
+                            crossAxisSpacing: spacing,
+                            mainAxisSpacing: spacing,
+                            childAspectRatio: 1.0,
+                          ),
+                          itemBuilder: (context, i) {
+                            if (i < folders.length) {
+                              final folder = folders[i];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => FolderDetailScreen(folder: folder),
+                                    ),
+                                  );
+                                },
+                                child: _FolderSquareCard(
+                                  folderName: folder.name,
+                                  onMorePressed: () => _showFolderMenu(folder, context),
+                                  iconSize: width * 0.093,
+                                  fontSize: width * 0.043,
                                 ),
                               );
-                            },
-                            child: _FolderSquareCard(
-                              folderName: folder.name,
-                              onMorePressed: () => _showFolderMenu(folder, context),
-                            ),
-                          );
-                        }
+                            } else {
+                              // "Add Folder" visually as a card
+                              return GestureDetector(
+                                onTap: _addFolder,
+                                child: _AddFolderCard(
+                                  iconSize: width * 0.10,
+                                  fontSize: width * 0.045,
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      },
                     );
                   },
                 ),
@@ -772,22 +822,31 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: Colors.teal.shade800,
           foregroundColor: Colors.white,
           onPressed: _openCamera,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          elevation: 4,
           child: const Icon(Icons.camera_alt_rounded, size: 32),
           tooltip: "Scan Document",
         ),
       ),
     );
   }
+
 }
 
 // Your square folder card widget
 class _FolderSquareCard extends StatelessWidget {
   final String folderName;
   final VoidCallback onMorePressed;
+  final double iconSize;
+  final double fontSize;
 
   const _FolderSquareCard({
     required this.folderName,
     required this.onMorePressed,
+    required this.iconSize,
+    required this.fontSize,
     super.key,
   });
 
@@ -795,55 +854,57 @@ class _FolderSquareCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // Existing folder card design
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(24),
             gradient: LinearGradient(
               colors: [
-                Colors.white.withOpacity(0.85),
-                Colors.teal.withOpacity(0.12),
+                Colors.white,
+                Colors.teal.shade100.withOpacity(0.15),
+                Colors.teal.shade50.withOpacity(0.2),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.teal.withOpacity(0.10),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
+                color: Colors.teal.withOpacity(0.07),
+                blurRadius: 22,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.folder_rounded, color: Colors.teal.shade700, size: 38),
-                const SizedBox(height: 14),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                  child: Text(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: iconSize * 0.3),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.folder_rounded, color: Colors.teal.shade700, size: iconSize),
+                  SizedBox(height: iconSize * 0.38),
+                  Text(
                     folderName,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 17,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: fontSize,
+                      color: Colors.teal.shade900,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-        // "More" button (top right)
         Positioned(
-          top: 0,
-          right: 0,
+          top: 8,
+          right: 8,
           child: IconButton(
-            icon: Icon(Icons.more_vert, color: Colors.grey.shade700, size: 20),
+            icon: Icon(Icons.more_vert, color: Colors.grey.shade600, size: fontSize * 1.1),
+            splashRadius: 21,
             onPressed: onMorePressed,
             tooltip: 'Folder options',
           ),
@@ -852,3 +913,54 @@ class _FolderSquareCard extends StatelessWidget {
     );
   }
 }
+
+class _AddFolderCard extends StatelessWidget {
+  final double iconSize;
+  final double fontSize;
+  const _AddFolderCard({super.key, required this.iconSize, required this.fontSize});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.tealAccent.withOpacity(0.13),
+            Colors.white.withOpacity(0.91),
+          ],
+          begin: Alignment.bottomLeft,
+          end: Alignment.topRight,
+        ),
+        border: Border.all(color: Colors.teal.shade400, width: 1.8),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.teal.withOpacity(0.06),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.add_circle_rounded, color: Colors.teal.shade400, size: iconSize),
+            SizedBox(height: iconSize * 0.35),
+            Text(
+              'Add Folder',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: fontSize,
+                color: Colors.teal.shade700,
+                letterSpacing: 0.07,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
