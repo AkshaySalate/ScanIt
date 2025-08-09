@@ -34,9 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final Folder? selectedFolder = await _showFolderPicker();
     if (selectedFolder == null) return;
 
-    final imagePath = await pickImageWithCamera(context);
-    if (imagePath != null) {
-      selectedFolder.images.add(imagePath);
+    final imagePath = await pickImagesWithCamera(context);
+    if (imagePath.isNotEmpty) {
+      selectedFolder.images.addAll(imagePath);
       await selectedFolder.save();
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(

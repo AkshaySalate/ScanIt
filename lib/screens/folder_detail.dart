@@ -19,16 +19,18 @@ class FolderDetailScreen extends StatefulWidget {
 
 class _FolderDetailScreenState extends State<FolderDetailScreen> {
   Future<void> _openCamera() async {
-    final imagePath = await pickImageWithCamera(context);
-    if (imagePath != null) {
+    final imagePaths = await pickImagesWithCamera(context);
+    if (imagePaths.isNotEmpty) {
+      // Add all scanned images to the folder
       setState(() {
-        widget.folder.images.add(imagePath);
+        widget.folder.images.addAll(imagePaths);
         widget.folder.save();
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Scanned document saved!')),
+        SnackBar(content: Text('${imagePaths.length} document(s) scanned and saved!')),
       );
     }
+
   }
 
   Future<Directory?> getPublicScanItFolder() async {

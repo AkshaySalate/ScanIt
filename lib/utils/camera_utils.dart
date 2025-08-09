@@ -1,9 +1,9 @@
-//lib/utils/camera_utils.dart
-import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 
-Future<String?> pickImageWithCamera(BuildContext context) async {
+// Returns a list of all scanned page paths (multi-page support)
+Future<List<String>> pickImagesWithCamera(BuildContext context) async {
   var status = await Permission.camera.status;
   if (!status.isGranted) {
     status = await Permission.camera.request();
@@ -28,11 +28,18 @@ Future<String?> pickImageWithCamera(BuildContext context) async {
           ],
         ),
       );
-      return null;
+      return [];
     }
   }
 
-  final picker = ImagePicker();
-  final XFile? image = await picker.pickImage(source: ImageSource.camera);
-  return image?.path;
+  try {
+    // Get all scanned/cropped images (user can do multiple pages in one session)
+    final images = await CunningDocumentScanner.getPictures() ?? [];
+    return images; // Will be empty if cancelled
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text("Document scanning cancelled or failed.")),
+    );
+    return [];
+  }
 }
