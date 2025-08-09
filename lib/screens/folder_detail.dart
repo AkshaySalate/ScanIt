@@ -18,6 +18,58 @@ class FolderDetailScreen extends StatefulWidget {
 }
 
 class _FolderDetailScreenState extends State<FolderDetailScreen> {
+  String _searchQuery = "";
+
+  void _editTags(String imagePath) {
+    final currentTags = widget.folder.imageTags[imagePath] ?? [];
+    final tagsController = TextEditingController(text: currentTags.join(', '));
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Edit Tags"),
+        content: TextField(
+          controller: tagsController,
+          decoration: const InputDecoration(
+            hintText: "Comma separated tags",
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final tags = tagsController.text
+                  .split(',')
+                  .map((e) => e.trim())
+                  .where((e) => e.isNotEmpty)
+                  .toList();
+              setState(() {
+                widget.folder.imageTags[imagePath] = tags;
+                widget.folder.save();
+              });
+              Navigator.pop(context);
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<String> _getFilteredImages() {
+    if (_searchQuery.isEmpty) return widget.folder.images;
+
+    return widget.folder.images.where((img) {
+      final tags = widget.folder.imageTags[img] ?? [];
+      final inTags = tags.any((t) => t.toLowerCase().contains(_searchQuery.toLowerCase()));
+      final inName = img.toLowerCase().contains(_searchQuery.toLowerCase());
+      return inTags || inName;
+    }).toList();
+  }
+
   Future<void> _openCamera() async {
     final imagePaths = await pickImagesWithCamera(context);
     if (imagePaths.isNotEmpty) {
@@ -371,8 +423,10 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 
 
   @override
+  @override
   Widget build(BuildContext context) {
-    final images = widget.folder.images;
+    final images = _getFilteredImages();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.folder.name),
@@ -382,12 +436,25 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
             onPressed: _showExportOptionsDialog,
             tooltip: "Export as PDF/Images",
           ),
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: "Search",
+            onPressed: () async {
+              final result = await showSearch<String?>(
+                context: context,
+                delegate: _ImageSearchDelegate(widget.folder),
+              );
+              if (result != null) {
+                setState(() => _searchQuery = result);
+              }
+            },
+          ),
         ],
       ),
       body: images.isEmpty
           ? Center(
         child: Text(
-          'No scans yet.\nTap the camera button below to add your first document!',
+          'No scans found.\nTap the camera button below to add your first document!',
           textAlign: TextAlign.center,
           style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
         ),
@@ -397,22 +464,52 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
         itemCount: images.length,
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2, mainAxisSpacing: 16, crossAxisSpacing: 16),
-        itemBuilder: (context, i) => GestureDetector(
-          onTap: () {
-            showDialog(
-              context: context,
-              builder: (_) => Dialog(
-                child: Image.file(File(images[i]), fit: BoxFit.contain),
-              ),
-            );
-          },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.file(File(images[i]), fit: BoxFit.cover),
-          ),
-        ),
+        itemBuilder: (context, i) {
+          final imgPath = images[i];
+          final tags = widget.folder.imageTags[imgPath] ?? [];
+          return GestureDetector(
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (_) => Dialog(
+                  child: Image.file(File(imgPath), fit: BoxFit.contain),
+                ),
+              );
+            },
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(File(imgPath), fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                ),
+                Positioned(
+                  bottom: 4,
+                  left: 4,
+                  right: 4,
+                  child: Wrap(
+                    spacing: 4,
+                    children: [
+                      for (final t in tags)
+                        Chip(
+                          label: Text(t, style: const TextStyle(fontSize: 10)),
+                          backgroundColor: Colors.black54,
+                          labelStyle: const TextStyle(color: Colors.white),
+                          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      IconButton(
+                        icon: const Icon(Icons.edit, size: 18, color: Colors.white),
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        onPressed: () => _editTags(imgPath),
+                      )
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
-
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal.shade800,
         foregroundColor: Colors.white,
@@ -423,3 +520,42 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
     );
   }
 }
+
+class _ImageSearchDelegate extends SearchDelegate<String?> {
+  final Folder folder;
+  _ImageSearchDelegate(this.folder);
+
+  @override
+  List<Widget> buildActions(BuildContext context) =>
+      [IconButton(onPressed: () => query = '', icon: const Icon(Icons.clear))];
+
+  @override
+  Widget buildLeading(BuildContext context) =>
+      IconButton(onPressed: () => close(context, null), icon: const Icon(Icons.arrow_back));
+
+  @override
+  Widget buildResults(BuildContext context) {
+    final results = folder.images.where((img) {
+      final tags = folder.imageTags[img] ?? [];
+      return img.toLowerCase().contains(query.toLowerCase()) ||
+          tags.any((t) => t.toLowerCase().contains(query.toLowerCase()));
+    }).toList();
+
+    return ListView.builder(
+      itemCount: results.length,
+      itemBuilder: (_, i) {
+        final imgPath = results[i];
+        return ListTile(
+          leading: Image.file(File(imgPath), width: 50, height: 50, fit: BoxFit.cover),
+          title: Text(imgPath.split('/').last),
+          subtitle: Text((folder.imageTags[imgPath] ?? []).join(', ')),
+          onTap: () => close(context, query),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) => buildResults(context);
+}
+
