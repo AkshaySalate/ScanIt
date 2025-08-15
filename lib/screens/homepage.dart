@@ -72,14 +72,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final imagePaths = await pickImagesWithCamera(context);
     if (imagePaths.isNotEmpty) {
-      final documentBox = Hive.box<Document>('documents');
+      final documentBox = Hive.box<Document>('documentBox');
       for (final path in imagePaths) {
+        String ocrText = "";
+        try {
+          ocrText = await extractTextFromImage(path);
+        } catch (e) {
+          ocrText = "";
+        }
         final doc = Document(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
           title: "Scan ${DateTime.now().toLocal()}",
           filePath: path,
           folderId: selectedFolder.id,
           tags: [],
+          ocrText: ocrText,
         );
         await documentBox.put(doc.id, doc);
       }

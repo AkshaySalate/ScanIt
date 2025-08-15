@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 import 'package:scanit/models/document.dart';
 
 class DocumentService {
-  final Box<Document> _docBox = Hive.box<Document>('documents');
+  final Box<Document> _docBox = Hive.box<Document>('documentBox');
 
   Future<void> addDocument(Document doc) => _docBox.put(doc.id, doc);
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 // Returns a list of all scanned page paths (multi-page support)
 Future<List<String>> pickImagesWithCamera(BuildContext context) async {
@@ -42,4 +43,12 @@ Future<List<String>> pickImagesWithCamera(BuildContext context) async {
     );
     return [];
   }
+}
+
+Future<String> extractTextFromImage(String filePath) async {
+  final inputImage = InputImage.fromFilePath(filePath);
+  final textRecognizer = TextRecognizer();
+  final RecognizedText recognizedText = await textRecognizer.processImage(inputImage);
+  await textRecognizer.close();
+  return recognizedText.text;
 }

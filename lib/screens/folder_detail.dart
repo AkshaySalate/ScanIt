@@ -135,11 +135,19 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
     final imagePaths = await pickImagesWithCamera(context);
     if (imagePaths.isNotEmpty) {
       for (final path in imagePaths) {
+        // ==== OCR Extraction ====
+        String ocrText = "";
+        try {
+          ocrText = await extractTextFromImage(path);
+        } catch (e) {
+          ocrText = "";
+        }
         final newDoc = Document(
           id: const Uuid().v4(),
           title: "Scan ${DateTime.now().toLocal()}",
           filePath: path,
           folderId: widget.folder.id,
+          ocrText: ocrText,
         );
         await _docService.addDocument(newDoc);
       }
