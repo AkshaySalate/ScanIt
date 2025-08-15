@@ -13,7 +13,8 @@ void main() async {
   Hive.registerAdapter(DocumentAdapter()); // <-- Register document
 
   await Hive.openBox<Folder>('foldersBox');
-  await Hive.openBox<Document>('documentsBox'); // <-- Open documents
+  await Hive.openBox<Document>('documents'); // <-- Open documents
+  await Hive.openBox('settings');
 
   runApp(const ScanITApp());
 }

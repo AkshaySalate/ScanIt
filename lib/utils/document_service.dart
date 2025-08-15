@@ -4,27 +4,24 @@ import 'package:scanit/models/document.dart';
 class DocumentService {
   final Box<Document> _docBox = Hive.box<Document>('documents');
 
-  Future<void> addDocument(Document doc) async {
-    await _docBox.put(doc.id, doc);
-  }
+  Future<void> addDocument(Document doc) => _docBox.put(doc.id, doc);
 
-  Future<void> updateDocument(Document doc) async {
-    await doc.save();
-  }
+  Future<void> updateDocument(Document doc) => doc.save();
 
-  Future<void> deleteDocument(String id) async {
-    await _docBox.delete(id);
-  }
+  Future<void> deleteDocument(String id) => _docBox.delete(id);
 
   List<Document> getDocumentsByFolder(String folderId) {
-    return _docBox.values
-        .where((doc) => doc.folderId == folderId)
-        .toList();
+    final docs = _docBox.values.where((doc) => doc.folderId == folderId).toList();
+    docs.sort((a, b) => b.createdDate.compareTo(a.createdDate));
+    return docs;
   }
 
-  List<Document> searchDocuments(String query) {
-    final q = query.toLowerCase();
-    return _docBox.values.where((doc) =>
+  List<Document> searchDocuments(String query, {String? folderId}) {
+    final q = query.trim().toLowerCase();
+    Iterable<Document> docs = _docBox.values;
+    if (folderId != null) docs = docs.where((doc) => doc.folderId == folderId);
+
+    return docs.where((doc) =>
     doc.title.toLowerCase().contains(q) ||
         doc.tags.any((tag) => tag.toLowerCase().contains(q)) ||
         (doc.ocrText?.toLowerCase().contains(q) ?? false)

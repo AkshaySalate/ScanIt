@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:scanit/models/folder.dart';
+import '../models/document.dart';
 import 'folder_detail.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:scanit/utils/camera_utils.dart';
@@ -19,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    migrateFolderImages();
     foldersBox = Hive.box<Folder>('foldersBox');
     // Set up initial folders if app is run for the first time
     if (foldersBox.isEmpty) {
@@ -30,17 +32,60 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> migrateFolderImages() async {
+    final documentBox = Hive.box<Document>('documents');
+    final foldersBox = Hive.box<Folder>('foldersBox');
+
+    bool migrationDone = await Hive.box('settings').get('migration_done', defaultValue: false);
+    if (migrationDone) return; // Migration already done, skip
+
+    for (Folder folder in foldersBox.values) {
+      if (folder.images.isNotEmpty) {
+        for (var imgPath in folder.images) {
+          final alreadyExists = documentBox.values.any(
+                  (doc) => doc.filePath == imgPath && doc.folderId == folder.id
+          );
+          if (!alreadyExists) {
+            final newDoc = Document(
+              id: DateTime.now().microsecondsSinceEpoch.toString(),
+              title: "Scan",
+              filePath: imgPath,
+              folderId: folder.id,
+              tags: folder.imageTags[imgPath] ?? [],
+            );
+            await documentBox.put(newDoc.id, newDoc);
+          }
+        }
+      }
+      folder.images.clear();
+      folder.imageTags.clear();
+      await folder.save();
+    }
+
+    await Hive.box('settings').put('migration_done', true);
+    print('Migration complete: old folder images moved to Documents.');
+  }
+
   Future<void> _openCamera() async {
-    final Folder? selectedFolder = await _showFolderPicker();
+    final selectedFolder = await _showFolderPicker();
     if (selectedFolder == null) return;
 
-    final imagePath = await pickImagesWithCamera(context);
-    if (imagePath.isNotEmpty) {
-      selectedFolder.images.addAll(imagePath);
-      await selectedFolder.save();
-      setState(() {});
+    final imagePaths = await pickImagesWithCamera(context);
+    if (imagePaths.isNotEmpty) {
+      final documentBox = Hive.box<Document>('documents');
+      for (final path in imagePaths) {
+        final doc = Document(
+          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          title: "Scan ${DateTime.now().toLocal()}",
+          filePath: path,
+          folderId: selectedFolder.id,
+          tags: [],
+        );
+        await documentBox.put(doc.id, doc);
+      }
+      setState(() {});  // Refresh UI after saving scans
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Image saved to "${selectedFolder.name}" folder!')),
+        SnackBar(content: Text('${imagePaths.length} document(s) scanned and saved!')),
       );
     }
   }
