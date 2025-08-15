@@ -240,25 +240,156 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                   builder: (context, setState) => Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Icon + Title
                       Icon(Icons.import_export_rounded, color: Colors.teal.shade600, size: 44),
                       const SizedBox(height: 14),
-                      const Text('Export Scanned Images', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal)),
+                      const Text(
+                        'Export Scanned Images',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Create a PDF or save images in your Documents/ScanIT folder.',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey.shade800,
+                          fontWeight: FontWeight.w400,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 18),
-                      TextField(controller: controller, decoration: const InputDecoration(hintText: 'Document Name')),
+                      // Document Name Field
+                      TextField(
+                        controller: controller,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.teal),
+                        decoration: InputDecoration(
+                          hintText: 'Document Name',
+                          filled: true,
+                          fillColor: Colors.tealAccent.withOpacity(0.06),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          prefixIcon: Icon(Icons.edit_note_rounded, color: Colors.teal.shade300),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+                        ),
+                      ),
                       const SizedBox(height: 24),
-                      Row(
-                        children: [
-                          Expanded(child: ChoiceChip(label: const Text("PDF"), selected: exportAsPdf, onSelected: (v) => setState(() => exportAsPdf = true))),
-                          const SizedBox(width: 12),
-                          Expanded(child: ChoiceChip(label: const Text("PNGs"), selected: !exportAsPdf, onSelected: (v) => setState(() => exportAsPdf = false))),
-                        ],
+                      // Export Type Toggle
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.teal.shade50.withOpacity(0.65),
+                              Colors.white.withOpacity(0.82),
+                            ],
+                            begin: Alignment.bottomRight,
+                            end: Alignment.topLeft,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () => setState(() => exportAsPdf = true),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 140),
+                                  decoration: BoxDecoration(
+                                    color: exportAsPdf ? Colors.teal.shade100.withOpacity(0.38) : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: exportAsPdf ? Colors.teal.shade400 : Colors.transparent,
+                                      width: exportAsPdf ? 1.4 : 0,
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.picture_as_pdf_rounded, color: Colors.teal.shade800, size: 24),
+                                      const SizedBox(width: 7),
+                                      Text(
+                                        "PDF",
+                                        style: TextStyle(
+                                          color: Colors.teal.shade900,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () => setState(() => exportAsPdf = false),
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 140),
+                                  decoration: BoxDecoration(
+                                    color: !exportAsPdf ? Colors.teal.shade100.withOpacity(0.38) : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: !exportAsPdf ? Colors.teal.shade400 : Colors.transparent,
+                                      width: !exportAsPdf ? 1.4 : 0,
+                                    ),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(vertical: 10),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.image_rounded, color: Colors.teal.shade800, size: 24),
+                                      const SizedBox(width: 7),
+                                      Text(
+                                        "PNGs",
+                                        style: TextStyle(
+                                          color: Colors.teal.shade900,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 28),
+                      // Action Buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                          OutlinedButton(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.teal.shade700,
+                              side: BorderSide(color: Colors.teal.shade200, width: 1.5),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                            ),
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+                          ),
+                          const SizedBox(width: 10),
                           ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.teal.shade700,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                              elevation: 2,
+                            ),
                             onPressed: () async {
                               Navigator.pop(context);
                               if (exportAsPdf) {
@@ -267,8 +398,8 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                                 await _exportAsPngs(controller.text.trim(), docs);
                               }
                             },
-                            child: const Text('Export'),
-                          )
+                            child: const Text('Export', style: TextStyle(fontSize: 16)),
+                          ),
                         ],
                       ),
                     ],
@@ -281,6 +412,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
       ),
     );
   }
+
 
   Future<Directory?> getPublicScanItFolder() async {
     // On Android, this gives something like /storage/emulated/0/Android/data/<package>/files
