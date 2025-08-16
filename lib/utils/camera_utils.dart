@@ -35,7 +35,9 @@ Future<List<String>> pickImagesWithCamera(BuildContext context) async {
 
   try {
     // Get all scanned/cropped images (user can do multiple pages in one session)
-    final images = await CunningDocumentScanner.getPictures() ?? [];
+    final images = await CunningDocumentScanner.getPictures(
+      isGalleryImportAllowed: true,
+    ) ?? [];
     return images; // Will be empty if cancelled
   } catch (e) {
     ScaffoldMessenger.of(context).showSnackBar(
